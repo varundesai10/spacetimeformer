@@ -326,7 +326,7 @@ class Spacetimeformer_Forecaster(stf.Forecaster):
             patience=3,
             factor=self.decay_factor,
         )
-        return [self.optimizer], [self.scheduler]
+        return [self.optimizer] #,[self.scheduler]
 
     @classmethod
     def add_cli(self, parser):

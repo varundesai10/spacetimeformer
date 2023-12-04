@@ -55,17 +55,22 @@ class CSVTimeSeries:
         self.time_col_name = time_col_name
         assert self.time_col_name in raw_df.columns
 
-        if not target_cols:
-            target_cols = raw_df.columns.tolist()
-            target_cols.remove(time_col_name)
+        #if not target_cols:
+        #    target_cols = raw_df.columns.tolist()
+        #    target_cols.remove(time_col_name)
 
         if ignore_cols:
             if ignore_cols == "all":
                 ignore_cols = raw_df.columns.difference(target_cols).tolist()
                 ignore_cols.remove(self.time_col_name)
             raw_df.drop(columns=ignore_cols, inplace=True)
+        
+        if not target_cols:
+            target_cols = raw_df.columns.tolist()
+            target_cols.remove(time_col_name)
 
-        time_df = pd.to_datetime(raw_df[self.time_col_name], format="%Y-%m-%d %H:%M")
+        #time_df = pd.to_datetime(raw_df[self.time_col_name], format="%Y-%m-%d %H:%M")
+        time_df = pd.to_datetime(raw_df[self.time_col_name], unit='m', origin='unix')
         df = stf.data.timefeatures.time_features(
             time_df,
             raw_df,

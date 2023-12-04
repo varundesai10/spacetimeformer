@@ -298,6 +298,12 @@ class Forecaster(pl.LightningModule, ABC):
                 "monitor": "val/loss",
             },
         }
+        #return {
+        #    "optimizer": optimizer,
+        #    "lr_scheduler": scheduler,
+        #    "monitor": "val/loss"
+        #}
+        
 
     @classmethod
     def add_cli(self, parser):
