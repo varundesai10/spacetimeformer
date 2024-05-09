@@ -80,38 +80,30 @@ class CSVTimeSeries:
         self.time_cols = df.columns.difference(raw_df.columns)
 
         # Train/Val/Test Split using holdout approach #
-
-        def mask_intervals(mask, intervals, cond):
-            for (interval_low, interval_high) in intervals:
-                if interval_low is None:
-                    interval_low = df[self.time_col_name].iloc[0].year
-                if interval_high is None:
-                    interval_high = df[self.time_col_name].iloc[-1].year
-                mask[
-                    (df[self.time_col_name] >= interval_low)
-                    & (df[self.time_col_name] <= interval_high)
-                ] = cond
+        def mask_intervals_by_index(mask, intervals, cond):
+            for (interval_low_idx, interval_high_idx) in intervals:
+                mask[interval_low_idx:interval_high_idx + 1] = cond
             return mask
 
-        test_cutoff = len(time_df) - max(round(test_split * len(time_df)), 1)
-        val_cutoff = test_cutoff - round(val_split * len(time_df))
-
-        val_interval_low = time_df.iloc[val_cutoff]
-        val_interval_high = time_df.iloc[test_cutoff - 1]
-        val_intervals = [(val_interval_low, val_interval_high)]
-
-        test_interval_low = time_df.iloc[test_cutoff]
-        test_interval_high = time_df.iloc[-1]
-        test_intervals = [(test_interval_low, test_interval_high)]
-
-        train_mask = df[self.time_col_name] > pd.Timestamp.min
+        # Assuming time_df is a DataFrame with indices corresponding to your data
+        test_cutoff_idx = len(time_df) - max(round(test_split * len(time_df)), 1)
+        val_cutoff_idx = test_cutoff_idx - round(val_split * len(time_df))
+        
+        # Define validation and test intervals using indices
+        val_intervals = [(val_cutoff_idx, test_cutoff_idx - 1)]
+        test_intervals = [(test_cutoff_idx, len(time_df) - 1)]
+        
+        # Initialize masks with False, assuming all indices initially not part of any set
+        train_mask =df[self.time_col_name] > pd.Timestamp.min
         val_mask = df[self.time_col_name] > pd.Timestamp.max
         test_mask = df[self.time_col_name] > pd.Timestamp.max
-        train_mask = mask_intervals(train_mask, test_intervals, False)
-        train_mask = mask_intervals(train_mask, val_intervals, False)
-        val_mask = mask_intervals(val_mask, val_intervals, True)
-        test_mask = mask_intervals(test_mask, test_intervals, True)
-
+        
+        # Apply intervals to masks
+        train_mask = mask_intervals_by_index(train_mask, test_intervals, False)
+        train_mask = mask_intervals_by_index(train_mask, val_intervals, False)
+        val_mask = mask_intervals_by_index(val_mask, val_intervals, True)
+        test_mask = mask_intervals_by_index(test_mask, test_intervals, True) 
+        #print(train_mask);
         if (train_mask == False).all():
             print(f"No training data detected for file {data_path}")
 
@@ -131,6 +123,7 @@ class CSVTimeSeries:
 
         self._train_data = df[train_mask]
         self._val_data = df[val_mask]
+        
         if test_split == 0.0:
             print("`test_split` set to 0. Using Val set as Test set.")
             self._test_data = df[val_mask]
@@ -245,6 +238,7 @@ class CSVTorchDset(Dataset):
         self.target_points = target_points
         self.time_resolution = time_resolution
 
+        #Adding a change here: initially, it sampled all segments (so slice_start_points was [0,1,2,...], now it is [0, target_points + context_points, ...]
         self._slice_start_points = [
             i
             for i in range(
@@ -252,6 +246,7 @@ class CSVTorchDset(Dataset):
                 self.series.length(split)
                 + time_resolution * (-target_points - context_points)
                 + 1,
+                target_points + context_points
             )
         ]
 

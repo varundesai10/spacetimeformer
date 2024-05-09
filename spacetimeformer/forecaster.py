@@ -266,6 +266,7 @@ class Forecaster(pl.LightningModule, ABC):
             if isinstance(stat, np.ndarray) or isinstance(stat, torch.Tensor):
                 stat = stat.mean()
             self.log(f"{section}/{key}", stat, sync_dist=True)
+            self.log(f"{section}_{key}", stat, sync_dist=True)
 
     def training_step_end(self, outs):
         self._log_stats("train", outs)

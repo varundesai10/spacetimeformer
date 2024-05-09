@@ -88,6 +88,7 @@ class Embedding(nn.Module):
             emb = self.spatio_temporal_embed
         else:
             emb = self.temporal_embed
+        #print(emb)
         return emb(y=y, x=x)
 
     def make_mask(self, y):
@@ -159,7 +160,8 @@ class Embedding(nn.Module):
         # full spatiotemopral emb method. lots of shape rearrange code
         # here to create artifically long (length x dim) spatiotemporal sequence
         batch, length, dy = y.shape
-
+        #print(y.shape)
+        #print(y)
         # position emb ("local_emb")
         local_pos = repeat(
             torch.arange(length).to(x.device), f"length -> {batch} ({dy} length)"
@@ -171,6 +173,8 @@ class Embedding(nn.Module):
             ]
         elif self.position_emb == "abs":
             # lookup pos emb
+            #print(local_pos)
+            #print(local_pos.shape)
             local_emb = self.local_emb(local_pos.long())
 
         # time emb
@@ -236,6 +240,8 @@ class Embedding(nn.Module):
         var_idx_true = var_idx.clone()
         if not self.use_space:
             var_idx = torch.zeros_like(var_idx)
+        
+        #print(f"{var_idx=}\n{self.space_emb=}\n{var_idx.shape=} {y.shape=} {x.shape=}")
         space_emb = self.space_emb(var_idx)
 
         return val_time_emb, space_emb, var_idx_true, mask
